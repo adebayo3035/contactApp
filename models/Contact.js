@@ -20,6 +20,7 @@ const contactSchema = new mongoose.Schema({
         unique: true,
     },
     address: String,
+    deleted: { type: Boolean, default: false } // Add this line for soft deletion
 });
 
 module.exports = mongoose.model('Contact', contactSchema);

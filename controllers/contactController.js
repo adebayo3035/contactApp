@@ -100,19 +100,38 @@ const deleteContact = async (req, res) => {
     }
 };
 
+
 // Search contact by email or phone
 const searchContact = async (req, res) => {
+    const { email, phone } = req.query; // Get 'email' and 'phone' from the query parameters
+
+    if (!email && !phone) {
+        return res.status(400).json({ message: 'Email or phone query parameter is required' });
+    }
+
     try {
-        const { query } = req.query;
-        const contact = await Contact.findOne({
-            $or: [{ email: query }, { phone: query }],
-        });
-        if (!contact) return res.status(404).json({ message: 'Contact not found' });
+        // Build search query object
+        let searchCriteria = {};
+        if (email) {
+            searchCriteria.email = { $regex: new RegExp(email, 'i') }; // Case-insensitive email search
+        }
+        if (phone) {
+            searchCriteria.phone = phone; // Exact match for phone
+        }
+
+        const contact = await Contact.findOne(searchCriteria);
+
+        if (!contact) {
+            return res.status(404).json({ message: 'Contact not found' });
+        }
+
         res.status(200).json(contact);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        console.error('Error searching contact:', error);
+        res.status(500).json({ message: 'Server error', error });
     }
 };
+
 
 module.exports = {
     createContact,

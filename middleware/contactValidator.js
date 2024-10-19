@@ -1,4 +1,4 @@
-const { body, validationResult } = require('express-validator');
+const { body, query, validationResult } = require('express-validator');
 
 // Validation rules for contact data
 const contactValidationRules = () => {
@@ -32,6 +32,22 @@ const contactValidationRules = () => {
     ];
 };
 
+// Validation rules for search endpoint
+const searchValidationRules = () => {
+    return [
+        // Check if at least one of email or phone is provided
+        query('email').optional().isEmail().withMessage('Invalid email format'),
+        query('phone').optional().matches(/^\d{11}$/).withMessage('Phone number must be 11 digits'),
+
+        // Ensure that at least one of email or phone is present
+        query().custom((_, { req }) => {
+            if (!req.query.email && !req.query.phone) {
+                throw new Error('At least one of email or phone must be provided');
+            }
+            return true;
+        }),
+    ];
+};
 // Middleware to validate the request
 const validate = (req, res, next) => {
     const errors = validationResult(req);
@@ -43,5 +59,6 @@ const validate = (req, res, next) => {
 
 module.exports = {
     contactValidationRules,
+    searchValidationRules,
     validate
 };

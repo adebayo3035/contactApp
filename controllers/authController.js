@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 
 // Register a new user
 const register = async (req, res) => {
-    const { username, email, password } = req.body;
+    const { username, email, password, role } = req.body;
 
     try {
         // Check if username or email already exists
@@ -14,7 +14,7 @@ const register = async (req, res) => {
         }
 
         // Create new user
-        const newUser = new User({ username, email, password });
+        const newUser = new User({ username, email, password, role });
         await newUser.save();
 
         // Generate JWT token
@@ -44,7 +44,17 @@ const login = async (req, res) => {
         }
 
         // Generate a token
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        // const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        // If authentication successful, create a JWT
+    const token = jwt.sign(
+        {
+            userId: user._id, 
+            role: user.role // Include the user role in the token
+        }, 
+        process.env.JWT_SECRET, 
+        { expiresIn: '1h' }
+    );
 
         res.status(200).json({ message: 'Logged in successfully', token });
     } catch (error) {
@@ -52,7 +62,39 @@ const login = async (req, res) => {
     }
 };
 
+// Search contact by email or phone
+const searchUser = async (req, res) => {
+    const { email, username } = req.query; // Get 'email' and 'phone' from the query parameters
+
+    if (!email && !username) {
+        return res.status(400).json({ message: 'Email or Username query parameter is required' });
+    }
+
+    try {
+        // Build search query object
+        let searchCriteria = {};
+        if (email) {
+            searchCriteria.email = { $regex: new RegExp(email, 'i') }; // Case-insensitive email search
+        }
+        if (username) {
+            searchCriteria.phone = phone; // Exact match for phone
+        }
+
+        const user = await User.findOne(searchCriteria);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json(user);
+    } catch (error) {
+        console.error('Error searching User:', error);
+        res.status(500).json({ message: 'Server error', error });
+    }
+};
+
+
 module.exports = {
     register,
     login,
+    searchUser
 };

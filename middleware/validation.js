@@ -13,6 +13,7 @@ const userRegistrationValidationRules = () => [
     body('password')
         .notEmpty().withMessage('Password is required')
         .isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
+    body('role').optional().isIn(['User', 'Admin']).withMessage('Invalid role'),
 ];
 
 // Validation rules for login

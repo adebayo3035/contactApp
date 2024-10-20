@@ -3,6 +3,17 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
+const rateLimit = require('express-rate-limit');
+
+// Implement rate limit on all endpoints
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: 'Too many requests from this IP, please try again later',
+});
+
+
+
 
 dotenv.config();
 
@@ -24,6 +35,7 @@ const contactRoutes = require('./routes/contacts');
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/contacts', contactRoutes);
+app.use('/api/', limiter);
 
 // Start the server
 const PORT = process.env.PORT || 3000;
